@@ -16,7 +16,7 @@
       </div>
     </div>
     <h2>Temp Historic</h2>
-    <div id="chart" class="chart-container"></div>
+    <div ref="chart" class="chart-container"></div>
   </div>
 </template>
 
@@ -73,64 +73,74 @@ h2 {
 }
 </style>
 <script>
-import { defineComponent, onMounted, ref, watch, nextTick } from "vue";
+import { defineComponent, onMounted, ref, watch } from "vue";
 import ApexCharts from "apexcharts";
 
 export default defineComponent({
   name: "DashboardPage",
 
   setup() {
-    const isChartReady = ref(false);
+    const chart = ref(null);
     const chartData = ref([20, 15, 18, 17, 25, 23]);
 
     onMounted(() => {
-      // Delay the chart initialization to ensure the DOM element is ready
-      nextTick().then(() => {
+      // Delay ApexCharts initialization by 2 seconds
+      setTimeout(() => {
         initializeChart();
-      });
+      }, 2000);
     });
 
     // Watch for changes in chartData and re-render the chart
-    watch(chartData, (newValue) => {
-      if (newValue && newValue.length > 0) {
-        initializeChart();
+    watch(chartData, () => {
+      if (chart.value) {
+        updateChart();
       }
     });
 
     function initializeChart() {
-      console.log("Initialize chart");
       try {
-        var chartElement = document.querySelector("#chart");
-        if (chartElement) {
-          console.log("Chart element found");
-          var options = {
-            chart: {
-              type: "line",
-            },
-            series: [{
+        const chartOptions = {
+          chart: {
+            type: "line",
+          },
+          series: [
+            {
               name: "temp",
               data: chartData.value,
-            }],
-            xaxis: {
-              categories: ["00H", "04H", "08H", "12H", "16H", "20H"],
             },
-          };
+          ],
+          xaxis: {
+            categories: ["00H", "04H", "08H", "12H", "16H", "20H"],
+          },
+        };
 
-          console.log("Initialize ApexCharts");
-          var chart = new ApexCharts(chartElement, options);
-          chart.render();
-          console.log("Chart rendered");
-        } else {
-          console.log("Chart element not found");
-        }
+        chart.value = new ApexCharts(
+          document.querySelector(".chart-container"),
+          chartOptions
+        );
+        chart.value.render();
       } catch (error) {
         console.error("Error initializing chart:", error);
       }
-      isChartReady.value = true; // Set this to true for testing
     }
+
+    function updateChart() {
+      try {
+        if (chart.value) {
+          chart.value.updateSeries([
+            {
+              data: chartData.value,
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error("Error updating chart:", error);
+      }
+    }
+
     return {
-      isChartReady,
-      chartData
+      chart,
+      chartData,
     };
   },
 });

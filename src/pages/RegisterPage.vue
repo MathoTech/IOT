@@ -1,18 +1,22 @@
 <template>
   <div class="landing-container">
     <div class="login-container">
-      <h2>Connexion</h2>
+      <h2>Créer un compte</h2>
 
-      <div class="label">Identifiant</div>
+      <div class="label">Email</div>
       <div class="input-container">
-        <input v-model="id" />
+        <input v-model="email" type="email" />
+      </div>
+      <div class="label">Username</div>
+      <div class="input-container">
+        <input v-model="username" type="username" />
       </div>
       <div class="label">Mot de passe</div>
       <div class="input-container">
         <input v-model="password" type="password" />
       </div>
-      <div class="button-container" @click="attemptLogin">
-        <div class="input-text">Se connecter</div>
+      <div class="button-container" @click="register">
+        <div class="input-text">S'inscrire</div>
       </div>
     </div>
   </div>
@@ -97,45 +101,50 @@ input[type="text"] {
 </style>
 
 <script>
+import { firebaseAuth, firebaseFirestore } from 'boot/firebase';
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { setDoc, doc } from "firebase/firestore";
 import { defineComponent } from "vue";
 import { Notify } from "quasar";
 
 export default defineComponent({
-  name: "LandingPage",
+  name: "RegisterPage",
   data() {
     return {
-      id: "",
+      email: "",
       password: "",
+      username: "",
     };
   },
   methods: {
-    attemptLogin() {
-      // Vérifiez les identifiants ici
-      if (
-        (this.id === "root" && this.password === "root") ||
-        (this.id === "admin" && this.password === "admin")
-      ) {
-        // Connexion réussie
-        Notify.create({
-          message: "Connexion réussie",
-          color: "positive",
-        });
-        setTimeout(() => {
-          // Redirection en fonction du rôle
-          if (this.id === "admin") {
-            this.$router.push("/admin");
-          } else {
-            this.$router.push("/dashboard");
-          }
-        }, 1000);
-      } else {
-        // Erreur de connexion
-        Notify.create({
-          message: "Erreur de connexion. Veuillez vérifier vos identifiants.",
-          color: "negative",
-        });
-      }
-    },
+    async register() {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(firebaseAuth, this.email, this.password);
+
+      const user = userCredential.user;
+
+      const userRef = doc(firebaseFirestore, "users", user.uid);
+
+      await setDoc(userRef, {
+        username: this.username,
+        email: this.email,
+        role: "user"
+      });
+
+      this.$router.push("/dashboard");
+
+      this.$q.notify({
+        message: "Compte créé avec succès. Vous pouvez maintenant vous connecter.",
+        color: "positive",
+      });
+    } catch (error) {
+      console.log(error);
+      this.$q.notify({
+        message: "Erreur lors de la création du compte. Veuillez réessayer.",
+        color: "negative",
+      });
+    }
+  },
   },
 });
 </script>

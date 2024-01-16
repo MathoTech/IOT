@@ -171,8 +171,12 @@ h4 {
 
 <script>
 import HelpModal from "../components/HelpModal.vue";
+import { firebaseAuth } from 'boot/firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { defineComponent } from 'vue';
 
-export default {
+export default defineComponent({
+  name: 'MainLayout',
   data() {
     return {
       isHelpModalOpen: false,
@@ -189,6 +193,17 @@ export default {
   components: {
     HelpModal,
   },
+  created() {
+    onAuthStateChanged(firebaseAuth, (user) => {
+      if (user) {
+        const uid = user.uid;
+        console.log('Utilisateur connecté avec l\'ID :', uid);
+        localStorage.setItem('uid', uid);
+      } else {
+        console.log('Utilisateur déconnecté');
+      }
+    });
+  },
   methods: {
     goToSettings() {
       this.$router.push("/settings");
@@ -200,21 +215,29 @@ export default {
     closeHelpModal() {
       this.isHelpModalOpen = false;
     },
-    logout() {
-      // Ajoutez la logique de déconnexion ici
-      console.log("Déconnexion");
+    async logout() {
+      try {
+        await signOut(firebaseAuth);
+        
+        this.$q.notify({
+          color: "positive",
+          position: "top",
+          message: "Déconnexion réussie",
+          icon: "check",
+        });
 
-      // Affiche la notification de déconnexion réussie
-      this.$q.notify({
-        color: "positive", // Vous pouvez également utiliser 'negative' pour une notification d'erreur
-        position: "top",
-        message: "Déconnexion réussie",
-        icon: "check",
-      });
+        localStorage.removeItem('uid');
 
-      // Rediriger vers la page de connexion
-      this.$router.push("/login");
+        this.$router.push("/");
+      } catch (error) {
+        console.error(error);
+        this.$q.notify({
+          color: "negative",
+          position: "top",
+          message: "Erreur lors de la déconnexion. Veuillez réessayer.",
+        });
+      }
     },
   },
-};
+});
 </script>

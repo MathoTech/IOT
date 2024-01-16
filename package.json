@@ -1,9 +1,9 @@
 {
   "name": "iot",
   "version": "0.0.1",
-  "description": "A Quasar Project",
-  "productName": "Quasar App",
-  "author": "Thomas Lopez <thomas1.lopez@epitech.eu>",
+  "description": "Temperature IOT Pannel",
+  "productName": "Temperature IOT Pannel",
+  "author": "Thomas Lopez <thomas1.lopez@epitech.eu>, Pierre DALLARA <pierre1.dallara@epitech.eu>",
   "private": true,
   "scripts": {
     "lint": "eslint --ext .js,.vue ./",
@@ -17,6 +17,7 @@
     "apexcharts": "^3.44.0",
     "chart.js": "^4.4.0",
     "firebase": "^10.7.1",
+    "mqtt": "^5.3.4",
     "quasar": "^2.14.1",
     "vue": "^3.0.0",
     "vue-apexcharts": "^1.6.2",

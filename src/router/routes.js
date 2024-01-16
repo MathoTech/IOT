@@ -8,6 +8,7 @@ const routes = [
       { path: '/register', component: () => import('src/pages/RegisterPage.vue') },
       { path: '/dashboard', component: () => import('src/pages/DashboardPage.vue') },
       { path: '/settings', component: () => import('src/pages/SettingsPage.vue') },
+      { path: '/mqtt', component: () => import('src/pages/MqttPage.vue') },
       { path: '/admin', component: () => import('src/pages/AdminPage.vue') },
 
 

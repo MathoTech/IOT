@@ -18,6 +18,7 @@
       <div class="button-container" @click="register">
         <div class="input-text">S'inscrire</div>
       </div>
+      <router-link to="/" class="register-link">Se connecter</router-link>
     </div>
   </div>
 </template>
@@ -97,6 +98,18 @@ input[type="text"] {
 /* Si vous voulez cibler spécifiquement les inputs avec une classe "no-outline" */
 .no-outline {
   outline: none;
+}
+.register-link {
+  color: #0099ff; /* Couleur du lien */
+  text-decoration: underline; /* Soulignez le lien */
+  cursor: pointer;
+  margin-top: 8px; /* Espacement du lien par rapport aux autres éléments */
+  display: block; /* Afficher en tant que bloc pour occuper la largeur disponible */
+}
+
+.register-link:hover {
+  color: red; /* Couleur du lien au survol */
+  transition: 0.5s;
 }
 </style>
 

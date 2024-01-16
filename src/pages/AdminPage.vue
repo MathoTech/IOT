@@ -22,5 +22,16 @@ import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "AdminPage",
+
+  beforeRouteEnter(to, from, next) {
+    const uid = localStorage.getItem("uid");
+
+    if (!uid) {
+      // Rediriger vers la page de connexion
+      next("/");
+    } else {
+      next();
+    }
+  },
 });
 </script>

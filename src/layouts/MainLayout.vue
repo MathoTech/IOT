@@ -184,7 +184,7 @@ export default defineComponent({
   },
   computed: {
     isLoginPage() {
-      return this.$route.path === "/login";
+      return this.$route.path === "/" || this.$route.path === "/register";
     },
     isSettingsPage() {
       return this.$route.path === "/settings";
@@ -201,6 +201,9 @@ export default defineComponent({
         localStorage.setItem('uid', uid);
       } else {
         console.log('Utilisateur déconnecté');
+        if (!this.isLoginPage) {
+          this.$router.push("/");
+        }
       }
     });
   },

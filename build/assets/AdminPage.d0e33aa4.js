@@ -1,1 +1,0 @@
-import{_ as a,N as s,y as t,z as o,F as n,G as _,A as c}from"./index.3107ed72.js";const d=s({name:"AdminPage"}),p=e=>(n("data-v-14fe37a4"),e=e(),_(),e),i={class:"settings-container"},r=p(()=>c("h2",null,"Admin Panel",-1)),l=[r];function m(e,f,u,h,v,g){return t(),o("div",i,l)}var x=a(d,[["render",m],["__scopeId","data-v-14fe37a4"]]);export{x as default};

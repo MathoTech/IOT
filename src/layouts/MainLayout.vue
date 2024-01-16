@@ -2,7 +2,7 @@
   <q-layout view="lHh Lpr lFf">
     <q-header elevated>
       <q-toolbar>
-        <img src="/icons/thermometre.png" />
+        <img src="../assets/thermometre.png" />
 
         <q-toolbar-title class="animated-title">
           <h4>

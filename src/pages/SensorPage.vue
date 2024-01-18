@@ -19,9 +19,10 @@
         <div class="card" v-for="(sn, index) in sensors" :key="index">
           <div class="card-content">
             {{ sn }}
-            <span class="delete-icon" @click="deleteSensor(index)">
-              🗑️
-            </span>
+            <span class="delete-icon" @click="deleteSensor(index)"> 🗑️ </span>
+            <button class="dashboard-button" @click="redirectToDashboard">
+              Look Data
+            </button>
           </div>
         </div>
       </div>
@@ -30,7 +31,7 @@
 </template>
 
 <script>
-import { firebaseAuth, firebaseFirestore } from 'boot/firebase';
+import { firebaseAuth, firebaseFirestore } from "boot/firebase";
 import { defineComponent, onMounted, ref } from "vue";
 import { Notify } from "quasar";
 import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
@@ -42,13 +43,16 @@ export default defineComponent({
   data() {
     return {
       serialNumber: "",
-      sensors: [] // Liste des numéros de série des capteurs
+      sensors: [], // Liste des numéros de série des capteurs
     };
   },
   methods: {
+    redirectToDashboard() {
+      this.$router.push("/dashboard");
+    },
     async registerSensor() {
       try {
-        if (this.serialNumber === "") throw("SerialNumber empty");
+        if (this.serialNumber === "") throw "SerialNumber empty";
         // Obtenir l'ID de l'utilisateur connecté
         const userId = firebaseAuth.currentUser.uid;
 
@@ -62,20 +66,28 @@ export default defineComponent({
           // Mettre à jour le document existant
           if (docSnap.data().sensorsSerialNumber.length >= MAX_SENSOR) {
             Notify.create({
-              message: "Nombre de sensor max: " + MAX_SENSOR + " par utilisateur / Erreur lors de l'enregistrement du capteur.",
+              message:
+                "Nombre de sensor max: " +
+                MAX_SENSOR +
+                " par utilisateur / Erreur lors de l'enregistrement du capteur.",
               color: "negative",
             });
             return;
           }
           await updateDoc(userRef, {
-            sensorsSerialNumber: [...docSnap.data().sensorsSerialNumber, this.serialNumber]
+            sensorsSerialNumber: [
+              ...docSnap.data().sensorsSerialNumber,
+              this.serialNumber,
+            ],
           });
-          localStorage.setItem("sensors", [...docSnap.data().sensorsSerialNumber, this.serialNumber]);
-
+          localStorage.setItem("sensors", [
+            ...docSnap.data().sensorsSerialNumber,
+            this.serialNumber,
+          ]);
         } else {
           // Créer un nouveau document
           await setDoc(userRef, {
-            sensorsSerialNumber: [this.serialNumber]
+            sensorsSerialNumber: [this.serialNumber],
           });
           localStorage.setItem("sensors", [this.serialNumber]);
         }
@@ -98,7 +110,7 @@ export default defineComponent({
 
     async fetchSensors() {
       try {
-        const userId = localStorage.getItem('uid');
+        const userId = localStorage.getItem("uid");
         const userRef = doc(firebaseFirestore, "sensors", userId);
         const docSnap = await getDoc(userRef);
 
@@ -113,28 +125,28 @@ export default defineComponent({
 
     async deleteSensor(index) {
       try {
-        const userId = localStorage.getItem('uid');
-        
+        const userId = localStorage.getItem("uid");
+
         // Référencer le document de l'utilisateur dans la collection 'sensors'
         const userRef = doc(firebaseFirestore, "sensors", userId);
-        
+
         // Vérifier si le document existe
         const docSnap = await getDoc(userRef);
-        
+
         if (docSnap.exists()) {
           // Créer un nouveau tableau sans l'élément à supprimer
           let updatedSensors = [...docSnap.data().sensorsSerialNumber];
           updatedSensors.splice(index, 1);
-          
+
           // Mettre à jour le document avec le nouveau tableau
           await updateDoc(userRef, {
-            sensorsSerialNumber: updatedSensors
+            sensorsSerialNumber: updatedSensors,
           });
-          
+
           // Mettre à jour la liste des capteurs dans l'interface utilisateur
           this.sensors = updatedSensors;
           localStorage.setItem("sensors", updatedSensors);
-          
+
           Notify.create({
             message: "Capteur supprimé avec succès",
             color: "positive",
@@ -147,16 +159,25 @@ export default defineComponent({
         });
         console.error(error);
       }
-    }
+    },
   },
   mounted() {
     this.fetchSensors(); // Récupérer la liste des capteurs lors du montage du composant
-  }
+  },
 });
 </script>
 
 
 <style scoped>
+.dashboard-button {
+  background-color: #0099ff; /* Couleur de fond du bouton Dashboard */
+  color: #ffffff; /* Couleur du texte du bouton Dashboard */
+  border: none;
+  padding: 4px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
 /* Styles adaptés pour la nouvelle classe .sensor-container */
 .sensor-container {
   margin: auto;
@@ -243,7 +264,7 @@ input[type="text"] {
   padding: 15px;
   margin-bottom: 10px;
   color: #eeeeee;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .card-content {
@@ -268,9 +289,9 @@ h2 {
 }
 
 .delete-icon {
+  margin-left: 50%;
   cursor: pointer;
   padding: 5px;
   font-size: 1.2em; /* Ajustez la taille de l'icône si nécessaire */
 }
-
 </style>

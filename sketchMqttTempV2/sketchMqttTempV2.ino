@@ -5,6 +5,9 @@
 #include <time.h>
 #include <DHT.h>
 
+// Numéro de série / Unique par carte
+const char* SERIAL_NUMBER = "TempModulIOT8888";
+
 // Paramètres du capteur DHT11
 #define DHTPIN 0
 #define DHTTYPE DHT11
@@ -12,7 +15,7 @@ DHT dht(DHTPIN, DHTTYPE);
 
 // Delay pour temp
 unsigned long previousMillis = 0;
-const long interval = 10000; //
+const long interval = 2000; //
 
 const char* mqtt_server = "u9v0uc.stackhero-network.com";
 const int mqtt_port = 8883;
@@ -57,6 +60,9 @@ const char* caCert =
 
 void setup() {
     Serial.begin(9600);
+
+    Serial.print("Serial Number: ");
+    Serial.println(SERIAL_NUMBER); 
 
     // Connect to WiFi using WiFiManager for ease of use
     WiFiManager wifiManager;
@@ -122,7 +128,9 @@ void loop() {
       dtostrf(temperature, 1, 2, tempString);
 
       // Publier sur le topic MQTT
-      mqttClient.publish("device/1/temperature", tempString);
+      char topic[50];
+      sprintf(topic, "device/%s/temperature", SERIAL_NUMBER);
+      mqttClient.publish(topic, tempString);
       // Serial.println("Message send");
       // Serial.print("Température: ");
       // Serial.print(temperature);
@@ -145,7 +153,9 @@ void connectToMqtt() {
         if (mqttClient.connect(clientId.c_str(), mqtt_user, mqtt_password)) {
             Serial.println("Connected to MQTT server");
             // Subscribe to topics here if needed
-            mqttClient.subscribe("device/1/light");
+            char topic[50];
+            sprintf(topic, "device/%s/light", SERIAL_NUMBER);
+            mqttClient.subscribe(topic);
         } else {
             Serial.print("Failed to connect, error code: ");
             Serial.println(mqttClient.state());
@@ -167,7 +177,9 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 
     // Handle the incoming message
     // Gérer le message pour la lumière
-    if (strcmp(topic, "device/1/light") == 0) {
+    char topicLight[50];
+    sprintf(topic, "device/%s/light", SERIAL_NUMBER);
+    if (strcmp(topic, topic) == 0) {
         if (strcmp(message, "ON") == 0) {
             digitalWrite(LED_BUILTIN, LOW); // Allumer la LED
         } else if (strcmp(message, "OFF") == 0) {

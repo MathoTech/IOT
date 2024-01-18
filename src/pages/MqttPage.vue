@@ -22,7 +22,7 @@ export default {
   mounted() {
     mqttClient.on("connect", () => {
       console.log("Connecté au serveur MQTT");
-      mqttClient.subscribe("device/1/temperature");
+      mqttClient.subscribe("device/TempModulIOT8888/temperature");
     });
 
     mqttClient.on("message", (topic, message) => {
@@ -38,7 +38,7 @@ export default {
     toggleLight(state) {
       const message = state ? "ON" : "OFF";
       console.log("Message try sending");
-      mqttClient.publish("device/1/light", message);
+      mqttClient.publish("device/TempModulIOT8888/light", message);
       console.log("Message send");
     },
   },

@@ -10,6 +10,7 @@ const routes = [
       { path: '/settings', component: () => import('src/pages/SettingsPage.vue') },
       { path: '/mqtt', component: () => import('src/pages/MqttPage.vue') },
       { path: '/admin', component: () => import('src/pages/AdminPage.vue') },
+      { path: '/sensor', component: () => import('src/pages/SensorPage.vue') },
 
 
     ]

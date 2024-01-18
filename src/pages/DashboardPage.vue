@@ -1,7 +1,7 @@
 <template>
   <div class="dashboard-container">
     <h2>Dashboard</h2>
-    <div class="day-record-container">
+    <div class="day-record-container" v-if="sensors.length > 0">
       <div class="lowest-container">
         <div class="temp-label">Lowest temp of the day</div>
         <div class="temp">15°C</div>
@@ -14,6 +14,10 @@
         <div class="temp-label">Highest temp of the day</div>
         <div class="temp">25°C</div>
       </div>
+    </div>
+    <div v-else class="no-sensor-message">
+      <p>Aucun capteur enregistré</p>
+      <router-link to="/sensor" class="register-sensor-button">Enregistrer un capteur</router-link>
     </div>
     <h2>Temp Historic</h2>
     <div ref="chart" class="chart-container"></div>
@@ -71,6 +75,28 @@ h2 {
   font-weight: bold;
   text-align: center;
 }
+.no-sensor-message p {
+  color: #eeeeee;
+  text-align: center;
+  font-size: 20px;
+}
+
+.register-sensor-button {
+  display: block;
+  margin: auto;
+  text-align: center;
+  background-color: #0099ff;
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 5px;
+  text-decoration: none;
+  margin-top: 20px;
+}
+
+.register-sensor-button:hover {
+  background-color: #0077cc;
+}
+
 </style>
 <script>
 import { defineComponent, onMounted, ref, watch } from "vue";
@@ -82,9 +108,10 @@ export default defineComponent({
   setup() {
     const chart = ref(null);
     const chartData = ref([20, 15, 18, 17, 25, 23]);
+    const sensors = ref([]);
 
     onMounted(() => {
-      // Delay ApexCharts initialization by 2 seconds
+      sensors.value = getStoredSensors();
       setTimeout(() => {
         initializeChart();
       }, 2000);
@@ -96,6 +123,12 @@ export default defineComponent({
         updateChart();
       }
     });
+
+    function getStoredSensors() {
+      const storedSensors = localStorage.getItem('sensors');
+      console.log("Sensors:", storedSensors);
+      return storedSensors ? storedSensors : [];
+    }
 
     function initializeChart() {
       try {
@@ -141,6 +174,7 @@ export default defineComponent({
     return {
       chart,
       chartData,
+      sensors
     };
   },
 });

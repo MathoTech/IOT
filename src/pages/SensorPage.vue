@@ -36,7 +36,7 @@ import { defineComponent, onMounted, ref } from "vue";
 import { Notify } from "quasar";
 import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 
-const MAX_SENSOR = 1;
+const MAX_SENSOR = 2;
 
 export default defineComponent({
   name: "AddSensorPage",
@@ -289,7 +289,6 @@ h2 {
 }
 
 .delete-icon {
-  margin-left: 50%;
   cursor: pointer;
   padding: 5px;
   font-size: 1.2em; /* Ajustez la taille de l'icône si nécessaire */

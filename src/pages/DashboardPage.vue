@@ -118,7 +118,10 @@ export default defineComponent({
   mounted() {
     this.sensors = this.getStoredSensors();
     if (this.sensors.length > 0) {
-      this.subscribeToMqtt(this.sensors);
+      console.log(this.sensors);
+
+      // Dashboard = données de sensors 1
+      this.subscribeToMqtt(this.sensors[0]);
     }
     this.initializeChart();
   },
@@ -126,7 +129,15 @@ export default defineComponent({
   methods: {
     getStoredSensors() {
       const storedSensors = localStorage.getItem('sensors');
-      return storedSensors ? storedSensors : [];
+      if (storedSensors) {
+        if (storedSensors.includes(',')) {
+          return storedSensors.split(',');
+        } else {
+          return [storedSensors];
+        }
+      } else {
+        return [];
+      }
     },
 
     subscribeToMqtt(sensorId) {
@@ -134,7 +145,7 @@ export default defineComponent({
       mqttClient.on("connect", () => {
         console.log("Connecté au serveur MQTT");
         mqttClient.subscribe(topic);
-        // console.log("Subscribed to topic");
+        console.log("Subscribed to topic", topic);
       });
       mqttClient.on("message", (topic, message) => {
         // console.log(`Message reçu sur ${topic}: ${message.toString()}`);

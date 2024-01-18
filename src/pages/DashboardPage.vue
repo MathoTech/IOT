@@ -118,7 +118,7 @@ export default defineComponent({
   mounted() {
     this.sensors = this.getStoredSensors();
     if (this.sensors.length > 0) {
-      console.log(this.sensors);
+      // console.log(this.sensors);
 
       // Dashboard = données de sensors 1
       this.subscribeToMqtt(this.sensors[0]);
@@ -145,7 +145,7 @@ export default defineComponent({
       mqttClient.on("connect", () => {
         console.log("Connecté au serveur MQTT");
         mqttClient.subscribe(topic);
-        console.log("Subscribed to topic", topic);
+        // console.log("Subscribed to topic", topic);
       });
       mqttClient.on("message", (topic, message) => {
         // console.log(`Message reçu sur ${topic}: ${message.toString()}`);

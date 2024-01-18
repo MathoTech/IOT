@@ -74,27 +74,65 @@ th {
 </style>
 
 <script>
-import { defineComponent } from "vue";
+import { defineComponent, onMounted, ref } from "vue";
+import { firebaseFirestore } from 'boot/firebase';
+import { collection, getDocs, doc, updateDoc, getDoc } from "firebase/firestore";
 
 export default defineComponent({
   name: "AdminPage",
 
-  data() {
-    return {
-      users: [
-        { id: 1, username: "Matho", sensors: ["sensor1", "sensor2"] },
-        { id: 2, username: "Pierre", sensors: ["sensor3", "sensor4"] },
-        // ... Ajoutez d'autres utilisateurs avec leurs données
-      ],
-    };
-  },
+  setup() {
+    const users = ref([]);
 
-  methods: {
-    removeSensor(userIndex, sensorIndex) {
-      this.users[userIndex].sensors.splice(sensorIndex, 1);
-    },
+    onMounted(async () => {
+      await fetchUsers();
+    });
 
-    exportToCSV(user) {
+    async function fetchUsers() {
+      try {
+        const usersCollection = collection(firebaseFirestore, "users");
+        const querySnapshot = await getDocs(usersCollection);
+        for (let doc of querySnapshot.docs) {
+          let userData = doc.data();
+          userData.id = doc.id; // Ajouter l'ID de l'utilisateur
+          userData.sensors = await fetchSensors(userData.id); // Récupérer les capteurs de l'utilisateur
+          users.value.push(userData);
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des utilisateurs :", error);
+      }
+    }
+
+    async function fetchSensors(userId) {
+      try {
+        const sensorRef = doc(firebaseFirestore, "sensors", userId);
+        const sensorDoc = await getDoc(sensorRef);
+        if (sensorDoc.exists()) {
+          return sensorDoc.data().sensorsSerialNumber || [];
+        }
+        return [];
+      } catch (error) {
+        console.error("Erreur lors de la récupération des capteurs :", error);
+        return [];
+      }
+    }
+
+    async function removeSensor(userIndex, sensorIndex) {
+      const userId = users.value[userIndex].id;
+      const updatedSensors = users.value[userIndex].sensors.slice();
+      updatedSensors.splice(sensorIndex, 1);
+
+      // Mise à jour du document utilisateur dans Firestore
+      const userRef = doc(firebaseFirestore, "sensors", userId);
+      await updateDoc(userRef, {
+        sensorsSerialNumber: updatedSensors
+      });
+
+      // Mise à jour de la liste des utilisateurs
+      users.value[userIndex].sensors = updatedSensors;
+    }
+
+    function exportToCSV(user) {
       const csvContent =
         "data:text/csv;charset=utf-8," +
         "Id utilisateur,Username,Array des sensors\n" +
@@ -104,21 +142,17 @@ export default defineComponent({
       const link = document.createElement("a");
       link.setAttribute("href", encodedUri);
       link.setAttribute("download", `${user.username}_sensors.csv`);
-      document.body.appendChild(link); // Required for FF
+      document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    },
-  },
-
-  beforeRouteEnter(to, from, next) {
-    const uid = localStorage.getItem("uid");
-
-    if (!uid) {
-      // Rediriger vers la page de connexion
-      next("/");
-    } else {
-      next();
     }
+
+    return {
+      users,
+      removeSensor,
+      exportToCSV
+    };
   },
 });
 </script>
+

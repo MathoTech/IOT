@@ -14,7 +14,8 @@
 
       <!-- Affichage de la liste des capteurs enregistrés -->
       <div v-if="sensors.length > 0" class="sensor-list">
-        <h2>Capteurs Enregistrés</h2> <!-- Style de titre ajusté -->
+        <h2 v-if="sensors.length > 1">Capteurs Enregistrés</h2>
+        <h2 v-if="sensors.length <= 1">Capteurs Enregistrés</h2>
         <div class="card" v-for="(sn, index) in sensors" :key="index">
           <div class="card-content">
             {{ sn }}
@@ -34,6 +35,8 @@ import { defineComponent, onMounted, ref } from "vue";
 import { Notify } from "quasar";
 import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 
+const MAX_SENSOR = 1;
+
 export default defineComponent({
   name: "AddSensorPage",
   data() {
@@ -45,6 +48,7 @@ export default defineComponent({
   methods: {
     async registerSensor() {
       try {
+        if (this.serialNumber === "") throw("SerialNumber empty");
         // Obtenir l'ID de l'utilisateur connecté
         const userId = firebaseAuth.currentUser.uid;
 
@@ -56,13 +60,20 @@ export default defineComponent({
 
         if (docSnap.exists()) {
           // Mettre à jour le document existant
+          if (docSnap.data().sensorsSerialNumber.length >= MAX_SENSOR) {
+            Notify.create({
+              message: "Nombre de sensor max: " + MAX_SENSOR + " par utilisateur / Erreur lors de l'enregistrement du capteur.",
+              color: "negative",
+            });
+            return;
+          }
           await updateDoc(userRef, {
-            sensorsSerialNumber: [...docSnap.data().sensorSN, this.serialNumber]
+            sensorsSerialNumber: [...docSnap.data().sensorsSerialNumber, this.serialNumber]
           });
         } else {
           // Créer un nouveau document
           await setDoc(userRef, {
-            sensorSN: [this.serialNumber]
+            sensorsSerialNumber: [this.serialNumber]
           });
         }
 
@@ -89,7 +100,7 @@ export default defineComponent({
         const docSnap = await getDoc(userRef);
 
         if (docSnap.exists()) {
-          this.sensors = docSnap.data().sensorSN;
+          this.sensors = docSnap.data().sensorsSerialNumber;
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des capteurs :", error);
@@ -108,12 +119,12 @@ export default defineComponent({
         
         if (docSnap.exists()) {
           // Créer un nouveau tableau sans l'élément à supprimer
-          let updatedSensors = [...docSnap.data().sensorSN];
+          let updatedSensors = [...docSnap.data().sensorsSerialNumber];
           updatedSensors.splice(index, 1);
           
           // Mettre à jour le document avec le nouveau tableau
           await updateDoc(userRef, {
-            sensorSN: updatedSensors
+            sensorsSerialNumber: updatedSensors
           });
           
           // Mettre à jour la liste des capteurs dans l'interface utilisateur

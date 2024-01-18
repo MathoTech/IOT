@@ -70,11 +70,14 @@ export default defineComponent({
           await updateDoc(userRef, {
             sensorsSerialNumber: [...docSnap.data().sensorsSerialNumber, this.serialNumber]
           });
+          localStorage.setItem("sensors", [...docSnap.data().sensorsSerialNumber, this.serialNumber]);
+
         } else {
           // Créer un nouveau document
           await setDoc(userRef, {
             sensorsSerialNumber: [this.serialNumber]
           });
+          localStorage.setItem("sensors", [this.serialNumber]);
         }
 
         Notify.create({
@@ -101,6 +104,7 @@ export default defineComponent({
 
         if (docSnap.exists()) {
           this.sensors = docSnap.data().sensorsSerialNumber;
+          localStorage.setItem("sensors", docSnap.data().sensorsSerialNumber);
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des capteurs :", error);
@@ -129,6 +133,7 @@ export default defineComponent({
           
           // Mettre à jour la liste des capteurs dans l'interface utilisateur
           this.sensors = updatedSensors;
+          localStorage.setItem("sensors", updatedSensors);
           
           Notify.create({
             message: "Capteur supprimé avec succès",

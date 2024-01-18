@@ -66,6 +66,7 @@ void setup() {
 
     // Connect to WiFi using WiFiManager for ease of use
     WiFiManager wifiManager;
+    wifiManager.setConnectTimeout(10);
     if (!wifiManager.autoConnect("D1MiniProAP")) {
         Serial.println("Failed to connect to WiFi. Restarting...");
         delay(3000);

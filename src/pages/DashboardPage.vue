@@ -8,7 +8,7 @@
       </div>
       <div class="actual-container">
         <div class="temp-label">Actual temp</div>
-        <div class="temp">23°C</div>
+        <div class="temp">{{ actualTemp }}</div>
       </div>
       <div class="highest-container">
         <div class="temp-label">Highest temp of the day</div>
@@ -99,83 +99,86 @@ h2 {
 
 </style>
 <script>
-import { defineComponent, onMounted, ref, watch } from "vue";
+import { defineComponent, ref, onMounted } from "vue";
 import ApexCharts from "apexcharts";
+import mqttClient from "src/mqtt"; // Assurez-vous que le chemin d'accès est correct
 
 export default defineComponent({
   name: "DashboardPage",
 
-  setup() {
-    const chart = ref(null);
-    const chartData = ref([20, 15, 18, 17, 25, 23]);
-    const sensors = ref([]);
-
-    onMounted(() => {
-      sensors.value = getStoredSensors();
-      setTimeout(() => {
-        initializeChart();
-      }, 2000);
-    });
-
-    // Watch for changes in chartData and re-render the chart
-    watch(chartData, () => {
-      if (chart.value) {
-        updateChart();
-      }
-    });
-
-    function getStoredSensors() {
-      const storedSensors = localStorage.getItem('sensors');
-      console.log("Sensors:", storedSensors);
-      return storedSensors ? storedSensors : [];
-    }
-
-    function initializeChart() {
-      try {
-        const chartOptions = {
-          chart: {
-            type: "line",
-          },
-          series: [
-            {
-              name: "temp",
-              data: chartData.value,
-            },
-          ],
-          xaxis: {
-            categories: ["00H", "04H", "08H", "12H", "16H", "20H"],
-          },
-        };
-
-        chart.value = new ApexCharts(
-          document.querySelector(".chart-container"),
-          chartOptions
-        );
-        chart.value.render();
-      } catch (error) {
-        console.error("Error initializing chart:", error);
-      }
-    }
-
-    function updateChart() {
-      try {
-        if (chart.value) {
-          chart.value.updateSeries([
-            {
-              data: chartData.value,
-            },
-          ]);
-        }
-      } catch (error) {
-        console.error("Error updating chart:", error);
-      }
-    }
-
+  data() {
     return {
-      chart,
-      chartData,
-      sensors
+      chart: null,
+      chartData: [20, 15, 18, 17, 25, 23],
+      sensors: [],
+      actualTemp: 'N/A', // Température actuelle
     };
+  },
+
+  mounted() {
+    this.sensors = this.getStoredSensors();
+    if (this.sensors.length > 0) {
+      this.subscribeToMqtt(this.sensors);
+    }
+    this.initializeChart();
+  },
+
+  methods: {
+    getStoredSensors() {
+      const storedSensors = localStorage.getItem('sensors');
+      return storedSensors ? storedSensors : [];
+    },
+
+    subscribeToMqtt(sensorId) {
+      const topic = `device/${sensorId}/temperature`;
+      mqttClient.on("connect", () => {
+        console.log("Connecté au serveur MQTT");
+        mqttClient.subscribe(topic);
+        // console.log("Subscribed to topic");
+      });
+      mqttClient.on("message", (topic, message) => {
+        // console.log(`Message reçu sur ${topic}: ${message.toString()}`);
+        this.actualTemp = `${message.toString()}°C`;
+      });
+      mqttClient.on("error", (err) => {
+        console.error("Erreur de connexion MQTT:", err);
+      });
+    },
+
+    initializeChart() {
+      const chartOptions = {
+        chart: {
+          type: "line",
+        },
+        series: [{
+          name: "temp",
+          data: this.chartData,
+        }],
+        xaxis: {
+          categories: ["00H", "04H", "08H", "12H", "16H", "20H"],
+        },
+      };
+
+      this.chart = new ApexCharts(document.querySelector(".chart-container"), chartOptions);
+      this.chart.render();
+    },
+
+    updateChart() {
+      if (this.chart) {
+        this.chart.updateSeries([{ data: this.chartData }]);
+      }
+    },
+
+    beforeUnmount() {
+      if (this.sensors.length > 0) {
+        const topic = `device/${this.sensors[0]}/temperature`;
+        mqttClient.unsubscribe(topic);
+        mqttClient.end();
+      }
+      if (this.chart) {
+        this.chart.destroy();
+      }
+    },
   },
 });
 </script>

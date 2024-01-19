@@ -12,7 +12,7 @@
         <div class="input-text">Enregistrer le Capteur</div>
       </div>
 
-      <div v-if="sensors.length > 0" class="sensor-list">
+      <div v-if="sensors && sensors.length > 0" class="sensor-list">
         <h2 v-if="sensors.length > 1">Capteurs Enregistrés</h2>
         <h2 v-if="sensors.length <= 1">Capteurs Enregistrés</h2>
         <div class="card" v-for="(sn, index) in sensors" :key="index">
@@ -57,7 +57,7 @@ export default defineComponent({
         if (this.serialNumber === "") throw "SerialNumber empty";
         const userId = firebaseAuth.currentUser.uid;
 
-        const userRef = doc(firebaseFirestore, "sensors", userId);
+        const userRef = doc(firebaseFirestore, "users", userId);
 
         const docSnap = await getDoc(userRef);
 
@@ -107,7 +107,7 @@ export default defineComponent({
     async fetchSensors() {
       try {
         const userId = localStorage.getItem("uid");
-        const userRef = doc(firebaseFirestore, "sensors", userId);
+        const userRef = doc(firebaseFirestore, "users", userId);
         const docSnap = await getDoc(userRef);
 
         if (docSnap.exists()) {
@@ -123,7 +123,7 @@ export default defineComponent({
       try {
         const userId = localStorage.getItem("uid");
 
-        const userRef = doc(firebaseFirestore, "sensors", userId);
+        const userRef = doc(firebaseFirestore, "users", userId);
 
         const docSnap = await getDoc(userRef);
 

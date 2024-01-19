@@ -75,8 +75,14 @@ th {
 
 <script>
 import { defineComponent, onMounted, ref } from "vue";
-import { firebaseFirestore } from 'boot/firebase';
-import { collection, getDocs, doc, updateDoc, getDoc } from "firebase/firestore";
+import { firebaseFirestore } from "boot/firebase";
+import {
+  collection,
+  getDocs,
+  doc,
+  updateDoc,
+  getDoc,
+} from "firebase/firestore";
 
 export default defineComponent({
   name: "AdminPage",
@@ -99,13 +105,16 @@ export default defineComponent({
           users.value.push(userData);
         }
       } catch (error) {
-        console.error("Erreur lors de la récupération des utilisateurs :", error);
+        console.error(
+          "Erreur lors de la récupération des utilisateurs :",
+          error
+        );
       }
     }
 
     async function fetchSensors(userId) {
       try {
-        const sensorRef = doc(firebaseFirestore, "sensors", userId);
+        const sensorRef = doc(firebaseFirestore, "users", userId);
         const sensorDoc = await getDoc(sensorRef);
         if (sensorDoc.exists()) {
           return sensorDoc.data().sensorsSerialNumber || [];
@@ -123,9 +132,9 @@ export default defineComponent({
       updatedSensors.splice(sensorIndex, 1);
 
       // Mise à jour du document utilisateur dans Firestore
-      const userRef = doc(firebaseFirestore, "sensors", userId);
+      const userRef = doc(firebaseFirestore, "users", userId);
       await updateDoc(userRef, {
-        sensorsSerialNumber: updatedSensors
+        sensorsSerialNumber: updatedSensors,
       });
 
       // Mise à jour de la liste des utilisateurs
@@ -150,9 +159,8 @@ export default defineComponent({
     return {
       users,
       removeSensor,
-      exportToCSV
+      exportToCSV,
     };
   },
 });
 </script>
-

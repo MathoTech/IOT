@@ -74,8 +74,9 @@ th {
 </style>
 
 <script>
+import { useRouter } from "vue-router";
 import { defineComponent, onMounted, ref } from "vue";
-import { firebaseFirestore } from "boot/firebase";
+import { firebaseAuth, firebaseFirestore } from "boot/firebase";
 import {
   collection,
   getDocs,
@@ -89,8 +90,12 @@ export default defineComponent({
 
   setup() {
     const users = ref([]);
+    const role = ref("user");
+    const router = useRouter();
 
     onMounted(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await fetchMe();
       await fetchUsers();
     });
 
@@ -100,8 +105,8 @@ export default defineComponent({
         const querySnapshot = await getDocs(usersCollection);
         for (let doc of querySnapshot.docs) {
           let userData = doc.data();
-          userData.id = doc.id; // Ajouter l'ID de l'utilisateur
-          userData.sensors = await fetchSensors(userData.id); // Récupérer les capteurs de l'utilisateur
+          userData.id = doc.id;
+          userData.sensors = await fetchSensors(userData.id);
           users.value.push(userData);
         }
       } catch (error) {
@@ -126,6 +131,21 @@ export default defineComponent({
       }
     }
 
+    async function fetchMe() {
+      try {
+        const userId = localStorage.getItem("uid");
+        const userRef = doc(firebaseFirestore, "users", userId);
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+          role.value = userDoc.data().role;
+          if (role.value != "admin") router.push("/dashboard");
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des infos user :", error);
+        return "user";
+      }
+    }
+
     async function removeSensor(userIndex, sensorIndex) {
       const userId = users.value[userIndex].id;
       const updatedSensors = users.value[userIndex].sensors.slice();
@@ -141,25 +161,10 @@ export default defineComponent({
       users.value[userIndex].sensors = updatedSensors;
     }
 
-    function exportToCSV(user) {
-      const csvContent =
-        "data:text/csv;charset=utf-8," +
-        "Id utilisateur,Username,Array des sensors\n" +
-        `${user.id},${user.username},"${user.sensors.join('", "')}"`;
-
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `${user.username}_sensors.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
     return {
       users,
       removeSensor,
-      exportToCSV,
+      role,
     };
   },
 });

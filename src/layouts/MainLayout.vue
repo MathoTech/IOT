@@ -12,13 +12,22 @@
           </h4>
         </q-toolbar-title>
         <div class="links">
-          <router-link class="nav-link" v-if="!isLoginPage" to="/dashboard"
+          <router-link
+            class="nav-link"
+            v-if="!isLoginPage && !isAdminPage"
+            to="/dashboard"
             >Dashboard</router-link
           >
-          <router-link class="nav-link" v-if="!isLoginPage" to="/settings"
+          <router-link
+            class="nav-link"
+            v-if="!isLoginPage && !isAdminPage"
+            to="/settings"
             >Settings</router-link
           >
-          <router-link class="nav-link" v-if="!isLoginPage" to="/sensor"
+          <router-link
+            class="nav-link"
+            v-if="!isLoginPage && !isAdminPage"
+            to="/sensor"
             >Sensor</router-link
           >
         </div>
@@ -207,6 +216,9 @@ export default defineComponent({
     };
   },
   computed: {
+    isAdminPage() {
+      return this.$route.path === "/admin";
+    },
     isLoginPage() {
       return this.$route.path === "/" || this.$route.path === "/register";
     },

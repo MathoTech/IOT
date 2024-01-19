@@ -46,6 +46,15 @@
     </div>
     <h2>Sensor Notification</h2>
     <div class="temperature-form">
+      <div class="input-container">
+        <div class="label">
+          Recevoir une notification si la température passe
+        </div>
+        <select v-model="notificationTemperatureSign">
+          <option value="Au dessus">Au dessus</option>
+          <option value="En dessous">En dessous</option>
+        </select>
+      </div>
       <div class="label">A quelle température recevoir notification</div>
       <div class="input-container">
         <input v-model="notificationTemperature" type="number" />
@@ -225,6 +234,7 @@ export default defineComponent({
       password: "",
       activeWifi: null,
       notificationTemperature: undefined,
+      notificationTemperatureSign: "Au dessus",
     };
   },
   methods: {
@@ -267,6 +277,7 @@ export default defineComponent({
 
         await updateDoc(userRef, {
           notifTempValue: this.notificationTemperature,
+          notifTempSign: this.notificationTemperatureSign,
         });
 
         Notify.create({
@@ -281,6 +292,7 @@ export default defineComponent({
         console.error(error);
       }
     },
+
     async fetchNotifTemp() {
       try {
         const userId = localStorage.getItem("uid");
@@ -289,6 +301,10 @@ export default defineComponent({
 
         if (docSnap.exists()) {
           this.notificationTemperature = docSnap.data().notifTempValue;
+          this.notificationTemperatureSign =
+            docSnap.data().notifTempSign == undefined
+              ? "Au dessus"
+              : docSnap.data().notifTempSign;
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des capteurs :", error);

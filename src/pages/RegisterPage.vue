@@ -114,7 +114,7 @@ input[type="text"] {
 </style>
 
 <script>
-import { firebaseAuth, firebaseFirestore } from 'boot/firebase';
+import { firebaseAuth, firebaseFirestore } from "boot/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { setDoc, doc } from "firebase/firestore";
 import { defineComponent } from "vue";
@@ -131,33 +131,39 @@ export default defineComponent({
   },
   methods: {
     async register() {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(firebaseAuth, this.email, this.password);
+      try {
+        const userCredential = await createUserWithEmailAndPassword(
+          firebaseAuth,
+          this.email,
+          this.password
+        );
 
-      const user = userCredential.user;
+        const user = userCredential.user;
 
-      const userRef = doc(firebaseFirestore, "users", user.uid);
+        const userRef = doc(firebaseFirestore, "users", user.uid);
 
-      await setDoc(userRef, {
-        username: this.username,
-        email: this.email,
-        role: "user"
-      });
+        await setDoc(userRef, {
+          username: this.username,
+          email: this.email,
+          sensorsSerialNumber: [],
+          role: "user",
+        });
 
-      this.$router.push("/dashboard");
+        this.$router.push("/dashboard");
 
-      this.$q.notify({
-        message: "Compte créé avec succès. Vous pouvez maintenant vous connecter.",
-        color: "positive",
-      });
-    } catch (error) {
-      console.log(error);
-      this.$q.notify({
-        message: "Erreur lors de la création du compte. Veuillez réessayer.",
-        color: "negative",
-      });
-    }
-  },
+        this.$q.notify({
+          message:
+            "Compte créé avec succès. Vous pouvez maintenant vous connecter.",
+          color: "positive",
+        });
+      } catch (error) {
+        console.log(error);
+        this.$q.notify({
+          message: "Erreur lors de la création du compte. Veuillez réessayer.",
+          color: "negative",
+        });
+      }
+    },
   },
 });
 </script>

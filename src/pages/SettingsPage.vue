@@ -37,12 +37,13 @@
         </div>
       </div>
     </div>
-    <h2>Sensor Wifi Settings</h2>
+    <h2>Sensor Settings</h2>
     <div class="buttons">
       <div @click="disconnect" class="button-container">Déconnexion Wifi</div>
       <div @click="resetWifiSettings" class="button-container">
         Réinitialiser les paramètres Wi-Fi
       </div>
+      <div @click="restart" class="button-container">Restart Sensor</div>
     </div>
     <h2>Sensor Notification</h2>
     <div class="temperature-form">
@@ -223,6 +224,7 @@ import { defineComponent } from "vue";
 import { firebaseFirestore, firebaseAuth } from "boot/firebase";
 import { doc, getDoc, updateDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { Notify } from "quasar";
+import mqttClient from "src/mqtt";
 
 export default defineComponent({
   name: "SettingsPage",
@@ -310,9 +312,73 @@ export default defineComponent({
         console.error("Erreur lors de la récupération des capteurs :", error);
       }
     },
+
+    getStoredSensors() {
+      const storedSensors = localStorage.getItem("sensors");
+      if (storedSensors) {
+        if (storedSensors.includes(",")) {
+          return storedSensors.split(",");
+        } else {
+          return [storedSensors];
+        }
+      } else {
+        return [];
+      }
+    },
+
+    async disconnect() {
+      try {
+        const sensors = this.getStoredSensors();
+        if (sensors.length > 0) {
+          const sensorId = sensors[0];
+          if (sensorId === "") throw "Sensors array error";
+          mqttClient.publish(`device/${sensorId}/settings`, "DISCONNECT_WIFI");
+        }
+      } catch (error) {
+        console.log(
+          "Erreur send cmd disconnect to mqtt topic settings:",
+          error
+        );
+      }
+    },
+
+    async resetWifiSettings() {
+      try {
+        const sensors = this.getStoredSensors();
+        if (sensors.length > 0) {
+          const sensorId = sensors[0];
+          if (sensorId === "") throw "Sensors array error";
+          mqttClient.publish(`device/${sensorId}/settings`, "RESET_WIFI");
+        }
+      } catch (error) {
+        console.log("Erreur send cmd reset to mqtt topic settings:", error);
+      }
+    },
+
+    async restart() {
+      try {
+        const sensors = this.getStoredSensors();
+        if (sensors.length > 0) {
+          const sensorId = sensors[0];
+          if (sensorId === "") throw "Sensors array error";
+          mqttClient.publish(`device/${sensorId}/settings`, "RESTART");
+        }
+      } catch (error) {
+        console.log("Erreur send cmd restart to mqtt topic settings:", error);
+      }
+    },
   },
   mounted() {
+    mqttClient.on("connect", () => {
+      console.log("Connecté au serveur MQTT");
+    });
+    mqttClient.on("error", (err) => {
+      console.error("Erreur de connexion:", err);
+    });
     this.fetchNotifTemp();
+  },
+  beforeUnmount() {
+    mqttClient.end();
   },
 });
 </script>

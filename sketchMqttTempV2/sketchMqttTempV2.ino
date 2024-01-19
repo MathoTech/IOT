@@ -182,7 +182,7 @@ void connectToMqtt() {
             Serial.println("Connected to MQTT server");
             // Subscribe to topics here if needed
             char topic[50];
-            sprintf(topic, "device/%s/light", SERIAL_NUMBER);
+            sprintf(topic, "device/%s/settings", SERIAL_NUMBER);
             mqttClient.subscribe(topic);
         } else {
             Serial.print("Failed to connect, error code: ");
@@ -205,13 +205,30 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 
     // Handle the incoming message
     // Gérer le message pour la lumière
-    char topicLight[50];
-    sprintf(topic, "device/%s/light", SERIAL_NUMBER);
-    if (strcmp(topic, topic) == 0) {
-        if (strcmp(message, "ON") == 0) {
-            digitalWrite(LED_BUILTIN, LOW); // Allumer la LED
-        } else if (strcmp(message, "OFF") == 0) {
-            digitalWrite(LED_BUILTIN, HIGH); // Éteindre la LED
+    // char topicLight[50];
+    // sprintf(topicLight, "device/%s/light", SERIAL_NUMBER);
+    // if (strcmp(topicLight, topic) == 0) {
+    //     if (strcmp(message, "ON") == 0) {
+    //         digitalWrite(LED_BUILTIN, LOW); // Allumer la LED
+    //     } else if (strcmp(message, "OFF") == 0) {
+    //         digitalWrite(LED_BUILTIN, HIGH); // Éteindre la LED
+    //     }
+    // }
+    char settingsTopic[50];
+    sprintf(settingsTopic, "device/%s/settings", SERIAL_NUMBER);
+    if (strcmp(topic, settingsTopic) == 0) {
+        if (strcmp(message, "DISCONNECT_WIFI") == 0) {
+            Serial.println("Déconnexion du WiFi...");
+            WiFi.disconnect(true);
+        } else if (strcmp(message, "RESET_WIFI") == 0) {
+            Serial.println("Réinitialisation des paramètres WiFi...");
+            WiFi.disconnect();
+            WiFiManager wifiManager;
+            wifiManager.resetSettings();
+            ESP.restart();
+        } else if (strcmp(message, "RESTART") == 0) {
+            Serial.println("Restart...");
+            ESP.restart();
         }
     }
 }

@@ -32,10 +32,41 @@
         </tr>
       </tbody>
     </table>
+    <div @click="exportUsersToCsv" class="button-container">
+      Export all users to CSV
+    </div>
   </div>
 </template>
 
 <style scoped>
+.button-container-add {
+  background-color: inherit;
+  overflow: none;
+  border-radius: 5px;
+  padding: 10px 24px;
+  color: #eeeeee;
+  transition: 1s;
+  margin: auto;
+  max-width: 300px;
+  background-color: #0099ff;
+  cursor: pointer;
+}
+.button-container:hover {
+  background-color: red;
+  transition: 1s;
+}
+.button-container {
+  margin: auto;
+  padding: 8px;
+  background-color: grey;
+  width: 20%;
+  font-weight: 700;
+  text-align: center;
+  border-radius: 5px;
+  margin-bottom: 24px;
+  color: #eeeeee;
+  cursor: pointer;
+}
 button {
   margin-left: 4px;
   padding: 4px 8px;
@@ -227,7 +258,7 @@ export default defineComponent({
 
             const a = document.createElement("a");
             a.href = url;
-            a.download = "sensor_data.csv";
+            a.download = `sensor_data_${userId}.csv`;
 
             a.click();
 
@@ -237,6 +268,53 @@ export default defineComponent({
       } catch (error) {
         console.error(
           "Erreur lors de la génération et du téléchargement du fichier CSV :",
+          error
+        );
+      }
+    }
+
+    async function exportUsersToCsv() {
+      try {
+        const querySnapshot = await getDocs(
+          collection(firebaseFirestore, "users")
+        );
+        let csvContent =
+          "User ID;Email;Last Notified;Notification Temp Sign;Notification Temp Value;Role;Sensors Serial Number;Username\n";
+
+        querySnapshot.forEach((doc) => {
+          const userData = doc.data();
+          const userId = doc.id;
+          const email = userData.email || "";
+          const lastNotified = userData.lastNotified
+            ? new Date(userData.lastNotified.seconds * 1000).toLocaleString()
+            : "";
+          const notifTempSign = userData.notifTempSign || "";
+          const notifTempValue = userData.notifTempValue || "";
+          const role = userData.role || "";
+          const sensorsSerialNumber = userData.sensorsSerialNumber
+            ? userData.sensorsSerialNumber.join(", ")
+            : "";
+          const username = userData.username || "";
+
+          csvContent += `${userId};${email};${lastNotified};${notifTempSign};${notifTempValue};${role};${sensorsSerialNumber};${username}\n`;
+        });
+
+        const blob = new Blob([csvContent], {
+          type: "text/csv;charset=utf-8",
+        });
+
+        const url = window.URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "all_users_data.csv";
+
+        a.click();
+
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error(
+          "Erreur lors de la génération et du téléchargement du fichier CSV pour tous les utilisateurs :",
           error
         );
       }
@@ -263,6 +341,7 @@ export default defineComponent({
       removeSensor,
       eraseData,
       exportToCSV,
+      exportUsersToCsv,
       role,
     };
   },

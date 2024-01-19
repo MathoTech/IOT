@@ -11,18 +11,23 @@
             >
           </h4>
         </q-toolbar-title>
-        <div class="settings-btn">
-          <q-btn
-            v-if="!isLoginPage && !isSettingsPage"
-            icon="settings"
-            @click="goToSettings"
-          ></q-btn>
+        <div class="links">
+          <router-link class="nav-link" v-if="!isLoginPage" to="/dashboard"
+            >Dashboard</router-link
+          >
+          <router-link class="nav-link" v-if="!isLoginPage" to="/settings"
+            >Settings</router-link
+          >
+          <router-link class="nav-link" v-if="!isLoginPage" to="/sensor"
+            >Sensor</router-link
+          >
         </div>
         <q-btn
           v-if="!isLoginPage"
           icon="power_settings_new"
           @click="logout"
         ></q-btn>
+        <!-- Ajoutez des liens vers toutes les pages ici -->
       </q-toolbar>
     </q-header>
     <q-page-container :class="{ 'blur-background': isHelpModalOpen }">
@@ -37,6 +42,26 @@
 
 
 <style scoped>
+.links {
+  display: flex;
+  color: #ffffff; /* Couleur du texte en blanc */
+  justify-content: space-around;
+  margin-right: 24px; /* Espacement à droite */
+}
+
+.nav-link {
+  text-decoration: none !important;
+  color: #ffffff; /* Couleur du texte en blanc */
+  padding: 8px; /* Espacement autour des liens */
+  cursor: pointer;
+}
+a {
+  font-weight: bold;
+  color: #eeeeee !important;
+  text-decoration: none !important;
+  padding: 8px; /* Espacement autour des liens */
+  cursor: pointer;
+}
 .settings-btn {
   margin-right: 24px;
 }
@@ -171,12 +196,12 @@ h4 {
 
 <script>
 import HelpModal from "../components/HelpModal.vue";
-import { firebaseAuth } from 'boot/firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { defineComponent } from 'vue';
+import { firebaseAuth } from "boot/firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { defineComponent } from "vue";
 
 export default defineComponent({
-  name: 'MainLayout',
+  name: "MainLayout",
   data() {
     return {
       isHelpModalOpen: false,
@@ -197,10 +222,10 @@ export default defineComponent({
     onAuthStateChanged(firebaseAuth, (user) => {
       if (user) {
         const uid = user.uid;
-        console.log('Utilisateur connecté avec l\'ID :', uid);
-        localStorage.setItem('uid', uid);
+        console.log("Utilisateur connecté avec l'ID :", uid);
+        localStorage.setItem("uid", uid);
       } else {
-        console.log('Utilisateur déconnecté');
+        console.log("Utilisateur déconnecté");
         if (!this.isLoginPage) {
           this.$router.push("/");
         }
@@ -221,7 +246,7 @@ export default defineComponent({
     async logout() {
       try {
         await signOut(firebaseAuth);
-        
+
         this.$q.notify({
           color: "positive",
           position: "top",
@@ -229,7 +254,7 @@ export default defineComponent({
           icon: "check",
         });
 
-        localStorage.removeItem('uid');
+        localStorage.removeItem("uid");
 
         this.$router.push("/");
       } catch (error) {

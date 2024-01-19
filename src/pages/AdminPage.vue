@@ -22,6 +22,7 @@
             >
               {{ sensor }}
               <button @click="removeSensor(index, sensorIndex)">Delete</button>
+              <button @click="eraseData(sensor)">Erase Data</button>
               <br />
             </div>
           </td>
@@ -83,7 +84,9 @@ import {
   doc,
   updateDoc,
   getDoc,
+  deleteDoc,
 } from "firebase/firestore";
+import { Notify } from "quasar";
 
 export default defineComponent({
   name: "AdminPage",
@@ -161,9 +164,82 @@ export default defineComponent({
       users.value[userIndex].sensors = updatedSensors;
     }
 
+    async function eraseData(sensor) {
+      try {
+        const sensorSerialNumber = sensor;
+
+        const sensorDocRef = doc(
+          firebaseFirestore,
+          "savedTemperature",
+          sensorSerialNumber
+        );
+
+        // Suppression du document du capteur
+        await deleteDoc(sensorDocRef);
+
+        Notify.create({
+          message: "Relevés du capteur supprimés avec succès",
+          color: "positive",
+        });
+      } catch (error) {
+        Notify.create({
+          message: "Erreur lors de la suppression des relevés du capteur.",
+          color: "negative",
+        });
+        console.error(error);
+      }
+    }
+
+    async function exportToCSV(userData) {
+      try {
+        const userId = userData.id;
+        const userRef = doc(firebaseFirestore, "users", userId);
+        const userDoc = await getDoc(userRef);
+        var sensorsTempData = [];
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const sensorsData = await fetchSensors(userId);
+          if (
+            sensorsData != undefined &&
+            sensorsData != [] &&
+            sensorsData.length > 0
+          ) {
+            for (let i = 0; i < sensorsData.length; i++) {
+              const sensorId = sensorsData[i];
+              const readings = await fetchTemp(sensorId);
+              sensorsTempData.push({ [sensorId]: readings });
+            }
+          }
+
+          console.log("Données de l'utilisateur :", userData);
+          console.log("Données des capteurs :", sensorsTempData);
+        }
+      } catch (error) {
+        console.error("Erreur lors de l'exportation des données :", error);
+      }
+    }
+
+    async function fetchTemp(sensorId) {
+      const docRef = doc(firebaseFirestore, "savedTemperature", sensorId);
+      try {
+        const doc = await getDoc(docRef);
+        if (doc.exists) {
+          const data = doc.data();
+          if (data == undefined || data.readings == undefined) return [];
+          console.log(data.readings);
+          return data.readings;
+        }
+      } catch (err) {
+        console.error("Erreur de récupération des données:", err);
+        return [];
+      }
+    }
+
     return {
       users,
       removeSensor,
+      eraseData,
+      exportToCSV,
       role,
     };
   },

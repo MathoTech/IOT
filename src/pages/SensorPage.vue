@@ -20,7 +20,10 @@
             {{ sn }}
             <span class="delete-icon" @click="deleteSensor(index)"> 🗑️ </span>
             <button class="dashboard-button" @click="redirectToDashboard">
-              Look Data
+              Watch Data
+            </button>
+            <button class="delete-button" @click="eraseData(index)">
+              Erase Data
             </button>
           </div>
         </div>
@@ -33,7 +36,7 @@
 import { firebaseAuth, firebaseFirestore } from "boot/firebase";
 import { defineComponent, onMounted, ref } from "vue";
 import { Notify } from "quasar";
-import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, setDoc, deleteDoc } from "firebase/firestore";
 
 const MAX_SENSOR = 1;
 
@@ -120,23 +123,18 @@ export default defineComponent({
       try {
         const userId = localStorage.getItem("uid");
 
-        // Référencer le document de l'utilisateur dans la collection 'sensors'
         const userRef = doc(firebaseFirestore, "sensors", userId);
 
-        // Vérifier si le document existe
         const docSnap = await getDoc(userRef);
 
         if (docSnap.exists()) {
-          // Créer un nouveau tableau sans l'élément à supprimer
           let updatedSensors = [...docSnap.data().sensorsSerialNumber];
           updatedSensors.splice(index, 1);
 
-          // Mettre à jour le document avec le nouveau tableau
           await updateDoc(userRef, {
             sensorsSerialNumber: updatedSensors,
           });
 
-          // Mettre à jour la liste des capteurs dans l'interface utilisateur
           this.sensors = updatedSensors;
           localStorage.setItem("sensors", updatedSensors);
 
@@ -148,6 +146,31 @@ export default defineComponent({
       } catch (error) {
         Notify.create({
           message: "Erreur lors de la suppression du capteur.",
+          color: "negative",
+        });
+        console.error(error);
+      }
+    },
+    async eraseData(index) {
+      try {
+        const sensorSerialNumber = this.sensors[index];
+
+        const sensorDocRef = doc(
+          firebaseFirestore,
+          "savedTemperature",
+          sensorSerialNumber
+        );
+
+        // Suppression du document du capteur
+        await deleteDoc(sensorDocRef);
+
+        Notify.create({
+          message: "Relevés du capteur supprimés avec succès",
+          color: "positive",
+        });
+      } catch (error) {
+        Notify.create({
+          message: "Erreur lors de la suppression des relevés du capteur.",
           color: "negative",
         });
         console.error(error);
@@ -282,5 +305,20 @@ h2 {
   cursor: pointer;
   padding: 5px;
   font-size: 1.2em;
+}
+.delete-button {
+  background-color: #ff0000; /* Couleur de fond du bouton de suppression */
+  color: #ffffff; /* Couleur du texte du bouton de suppression */
+  border: none;
+  padding: 4px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-right: 10px; /* Ajoute une marge à droite du bouton */
+}
+
+.delete-button:hover {
+  background-color: #ff3333; /* Couleur de fond au survol du bouton de suppression */
+  transition: background-color 0.3s;
 }
 </style>

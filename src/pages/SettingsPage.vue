@@ -37,10 +37,23 @@
         </div>
       </div>
     </div>
+    <div class="buttons">
+      <button @click="disconnect" class="button-container-add">
+        Déconnecter
+      </button>
+      <button @click="resetWifiSettings" class="button-container-add">
+        Réinitialiser les paramètres Wi-Fi
+      </button>
+    </div>
   </div>
 </template>
 
 <style scoped>
+.buttons {
+  text-align: center;
+  display: flex;
+  justify-content: space-between;
+}
 .wifi.active {
   border: 2px solid #00ff00; /* Bordure verte pour le wifi actif */
 }

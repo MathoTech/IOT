@@ -164,7 +164,7 @@ export default defineComponent({
         },
         series: [
           {
-            name: "temp",
+            name: "Temperature",
             data: this.chartData,
           },
         ],
@@ -180,12 +180,6 @@ export default defineComponent({
       this.chart.render();
     },
 
-    updateChart() {
-      if (this.chart) {
-        this.chart.updateSeries([{ data: this.chartData }]);
-      }
-    },
-
     fetchTemperatureData(sensorId) {
       const docRef = doc(firebaseFirestore, "savedTemperature", sensorId);
       getDoc(docRef)
@@ -193,15 +187,34 @@ export default defineComponent({
           if (doc.exists) {
             const data = doc.data();
             if (data == undefined || data.readings == undefined) return [];
+
+            // Traitement des données pour le graphique
             this.chartData = data.readings.map(
               (reading) => reading.temperature
             );
-            this.updateChart(); // Mettre à jour le graphique avec les nouvelles données
+
+            // Traitement des catégories pour l'axe X
+            const chartCategories = data.readings.map(
+              (reading) => `${reading.dayYear} ${reading.hour}`
+            );
+
+            this.updateChart(chartCategories);
           }
         })
         .catch((err) => {
           console.error("Erreur de récupération des données:", err);
         });
+    },
+
+    updateChart(chartCategories) {
+      if (this.chart) {
+        this.chart.updateOptions({
+          xaxis: {
+            categories: chartCategories,
+          },
+        });
+        this.chart.updateSeries([{ data: this.chartData }]);
+      }
     },
 
     beforeUnmount() {

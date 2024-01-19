@@ -133,22 +133,22 @@ void loop() {
       // mqttClient.publish(saveTopic, tempString);
       char saveTopic[17] = "/saveTemperature";
       char saveString[50];
-      sprintf(saveString, "%s: %f", SERIAL_NUMBER, temperature);
+      sprintf(saveString, "%s: %.2f", SERIAL_NUMBER, temperature);
       mqttClient.publish(saveTopic, saveString);
-      Serial.print("Message send to ");
-      Serial.print(saveTopic);
-      Serial.print("        ");
-      Serial.println(saveString);
+      // Serial.print("Message send to ");
+      // Serial.print(saveTopic);
+      // Serial.print("        ");
+      // Serial.println(saveString);
 
       char topic[50];
       sprintf(topic, "device/%s/temperature", SERIAL_NUMBER);
       mqttClient.publish(topic, tempString);
-      Serial.print("Message send to ");
-      Serial.print(topic);
-      Serial.print("        ");
-      Serial.print("Température: ");
-      Serial.print(temperature);
-      Serial.println(" °C");
+      // Serial.print("Message send to ");
+      // Serial.print(topic);
+      // Serial.print("        ");
+      // Serial.print("Température: ");
+      // Serial.print(temperature);
+      // Serial.println(" °C");
     }
   }
 }

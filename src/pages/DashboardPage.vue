@@ -4,7 +4,9 @@
     <div class="day-record-container" v-if="sensors.length > 0">
       <div class="lowest-container">
         <div class="temp-label">Lowest temp of the day</div>
-        <div class="temp">15°C</div>
+        <div class="temp">
+          {{ lowestTempToday ? `${lowestTempToday}°C` : "N/A" }}
+        </div>
       </div>
       <div class="actual-container">
         <div class="temp-label">Actual temp</div>
@@ -12,7 +14,9 @@
       </div>
       <div class="highest-container">
         <div class="temp-label">Highest temp of the day</div>
-        <div class="temp">25°C</div>
+        <div class="temp">
+          {{ highestTempToday ? `${highestTempToday}°C` : "N/A" }}
+        </div>
       </div>
     </div>
     <div v-else class="no-sensor-message">
@@ -23,6 +27,20 @@
     </div>
     <h2>Temp Historic</h2>
     <div ref="chart" class="chart-container"></div>
+    <div class="day-record-container" v-if="sensors.length > 0">
+      <div class="lowest-container">
+        <div class="temp-label">Lowest temp</div>
+        <div class="temp">
+          {{ lowestTemp ? `${lowestTemp}°C` : "N/A" }}
+        </div>
+      </div>
+      <div class="highest-container">
+        <div class="temp-label">Highest temp</div>
+        <div class="temp">
+          {{ highestTemp ? `${highestTemp}°C` : "N/A" }}
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -114,7 +132,11 @@ export default defineComponent({
       chart: null,
       chartData: [],
       sensors: [],
-      actualTemp: "N/A", // Température actuelle
+      actualTemp: "N/A",
+      lowestTempToday: null,
+      highestTempToday: null,
+      lowestTemp: null,
+      highestTemp: null,
     };
   },
 
@@ -122,7 +144,7 @@ export default defineComponent({
     this.sensors = this.getStoredSensors();
     if (this.sensors.length > 0) {
       this.subscribeToMqtt(this.sensors[0]);
-      this.fetchTemperatureData(this.sensors[0]); // Nouvelle méthode pour récupérer les données de température
+      this.fetchTemperatureData(this.sensors[0]);
     }
     this.initializeChart();
   },
@@ -169,7 +191,7 @@ export default defineComponent({
           },
         ],
         xaxis: {
-          categories: ["00H", "04H", "08H", "12H", "16H", "20H"],
+          categories: [],
         },
       };
 
@@ -188,16 +210,33 @@ export default defineComponent({
             const data = doc.data();
             if (data == undefined || data.readings == undefined) return [];
 
-            // Traitement des données pour le graphique
             this.chartData = data.readings.map(
               (reading) => reading.temperature
             );
 
-            // Traitement des catégories pour l'axe X
+            this.lowestTemp = Math.min(...this.chartData);
+            this.highestTemp = Math.max(...this.chartData);
+
+            const today = new Date();
+            const formattedToday = `${today.getDate()}-${
+              today.getMonth() + 1
+            }-${today.getFullYear()}`;
+
+            const todaysReadings = data.readings.filter(
+              (reading) => reading.dayYear === formattedToday
+            );
+
+            if (todaysReadings.length > 0) {
+              const temperaturesToday = todaysReadings.map(
+                (reading) => reading.temperature
+              );
+              this.lowestTempToday = Math.min(...temperaturesToday);
+              this.highestTempToday = Math.max(...temperaturesToday);
+            }
+
             const chartCategories = data.readings.map(
               (reading) => `${reading.dayYear} ${reading.hour}`
             );
-
             this.updateChart(chartCategories);
           }
         })

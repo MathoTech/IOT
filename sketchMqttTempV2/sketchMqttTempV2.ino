@@ -15,7 +15,7 @@ DHT dht(DHTPIN, DHTTYPE);
 
 // Delay pour temp
 unsigned long previousMillis = 0;
-const long interval = 2000; //
+const long interval = 2000;
 
 const char* mqtt_server = "u9v0uc.stackhero-network.com";
 const int mqtt_port = 8883;
@@ -128,14 +128,27 @@ void loop() {
       char tempString[8];
       dtostrf(temperature, 1, 2, tempString);
 
-      // Publier sur le topic MQTT
+      // char saveTopic[50];
+      // sprintf(topic, "/saveTemperature/%s", SERIAL_NUMBER);
+      // mqttClient.publish(saveTopic, tempString);
+      char saveTopic[17] = "/saveTemperature";
+      char saveString[50];
+      sprintf(saveString, "%s: %f", SERIAL_NUMBER, temperature);
+      mqttClient.publish(saveTopic, saveString);
+      Serial.print("Message send to ");
+      Serial.print(saveTopic);
+      Serial.print("        ");
+      Serial.println(saveString);
+
       char topic[50];
       sprintf(topic, "device/%s/temperature", SERIAL_NUMBER);
       mqttClient.publish(topic, tempString);
-      // Serial.println("Message send");
-      // Serial.print("Température: ");
-      // Serial.print(temperature);
-      // Serial.println(" °C");
+      Serial.print("Message send to ");
+      Serial.print(topic);
+      Serial.print("        ");
+      Serial.print("Température: ");
+      Serial.print(temperature);
+      Serial.println(" °C");
     }
   }
 }

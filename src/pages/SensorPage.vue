@@ -12,7 +12,6 @@
         <div class="input-text">Enregistrer le Capteur</div>
       </div>
 
-      <!-- Affichage de la liste des capteurs enregistrés -->
       <div v-if="sensors.length > 0" class="sensor-list">
         <h2 v-if="sensors.length > 1">Capteurs Enregistrés</h2>
         <h2 v-if="sensors.length <= 1">Capteurs Enregistrés</h2>
@@ -36,14 +35,14 @@ import { defineComponent, onMounted, ref } from "vue";
 import { Notify } from "quasar";
 import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 
-const MAX_SENSOR = 2;
+const MAX_SENSOR = 1;
 
 export default defineComponent({
   name: "AddSensorPage",
   data() {
     return {
       serialNumber: "",
-      sensors: [], // Liste des numéros de série des capteurs
+      sensors: [],
     };
   },
   methods: {
@@ -53,17 +52,13 @@ export default defineComponent({
     async registerSensor() {
       try {
         if (this.serialNumber === "") throw "SerialNumber empty";
-        // Obtenir l'ID de l'utilisateur connecté
         const userId = firebaseAuth.currentUser.uid;
 
-        // Référencer le document de l'utilisateur dans la collection 'sensors'
         const userRef = doc(firebaseFirestore, "sensors", userId);
 
-        // Vérifier si le document existe
         const docSnap = await getDoc(userRef);
 
         if (docSnap.exists()) {
-          // Mettre à jour le document existant
           if (docSnap.data().sensorsSerialNumber.length >= MAX_SENSOR) {
             Notify.create({
               message:
@@ -85,7 +80,6 @@ export default defineComponent({
             this.serialNumber,
           ]);
         } else {
-          // Créer un nouveau document
           await setDoc(userRef, {
             sensorsSerialNumber: [this.serialNumber],
           });
@@ -97,7 +91,6 @@ export default defineComponent({
           color: "positive",
         });
 
-        // Redirection après l'enregistrement
         this.$router.push("/dashboard");
       } catch (error) {
         Notify.create({
@@ -162,11 +155,10 @@ export default defineComponent({
     },
   },
   mounted() {
-    this.fetchSensors(); // Récupérer la liste des capteurs lors du montage du composant
+    this.fetchSensors();
   },
 });
 </script>
-
 
 <style scoped>
 .dashboard-button {
@@ -178,7 +170,6 @@ export default defineComponent({
   cursor: pointer;
   transition: background-color 0.3s;
 }
-/* Styles adaptés pour la nouvelle classe .sensor-container */
 .sensor-container {
   margin: auto;
   animation: SlideFromBottom 1s;
@@ -278,9 +269,8 @@ h2 {
   margin-bottom: 20px; /* Ajout d'une marge en bas du titre */
 }
 
-/* Styles supplémentaires pour le conteneur du formulaire */
 .form-container {
-  margin-bottom: 40px; /* Espacement entre le formulaire et la liste des capteurs */
+  margin-bottom: 40px;
 }
 .card-content {
   display: flex;
@@ -291,6 +281,6 @@ h2 {
 .delete-icon {
   cursor: pointer;
   padding: 5px;
-  font-size: 1.2em; /* Ajustez la taille de l'icône si nécessaire */
+  font-size: 1.2em;
 }
 </style>

@@ -195,27 +195,50 @@ export default defineComponent({
         const userId = userData.id;
         const userRef = doc(firebaseFirestore, "users", userId);
         const userDoc = await getDoc(userRef);
-        var sensorsTempData = [];
         if (userDoc.exists()) {
           const userData = userDoc.data();
           const sensorsData = await fetchSensors(userId);
-          if (
-            sensorsData != undefined &&
-            sensorsData != [] &&
-            sensorsData.length > 0
-          ) {
+          const sensorsTempData = [];
+
+          if (sensorsData !== undefined && sensorsData.length > 0) {
             for (let i = 0; i < sensorsData.length; i++) {
               const sensorId = sensorsData[i];
               const readings = await fetchTemp(sensorId);
-              sensorsTempData.push({ [sensorId]: readings });
+              sensorsTempData.push({ sensorId, readings });
             }
-          }
 
-          console.log("Données de l'utilisateur :", userData);
-          console.log("Données des capteurs :", sensorsTempData);
+            let csvContent = "Sensor ID;Date;Temperature\n";
+            sensorsTempData.forEach((sensorData) => {
+              const sensorId = sensorData.sensorId;
+              for (let index = 0; index < sensorData.readings.length; index++) {
+                const element = sensorData.readings[index];
+                console.log(element);
+                const date = `${element.dayYear} ${element.hour}`;
+                const temperature = element.temperature;
+                csvContent += `${sensorId};${date};${temperature}\n`;
+              }
+            });
+
+            const blob = new Blob([csvContent], {
+              type: "text/csv;charset=utf-8",
+            });
+
+            const url = window.URL.createObjectURL(blob);
+
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "sensor_data.csv";
+
+            a.click();
+
+            window.URL.revokeObjectURL(url);
+          }
         }
       } catch (error) {
-        console.error("Erreur lors de l'exportation des données :", error);
+        console.error(
+          "Erreur lors de la génération et du téléchargement du fichier CSV :",
+          error
+        );
       }
     }
 

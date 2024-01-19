@@ -17,7 +17,9 @@
     </div>
     <div v-else class="no-sensor-message">
       <p>Aucun capteur enregistré</p>
-      <router-link to="/sensor" class="register-sensor-button">Enregistrer un capteur</router-link>
+      <router-link to="/sensor" class="register-sensor-button"
+        >Enregistrer un capteur</router-link
+      >
     </div>
     <h2>Temp Historic</h2>
     <div ref="chart" class="chart-container"></div>
@@ -96,12 +98,13 @@ h2 {
 .register-sensor-button:hover {
   background-color: #0077cc;
 }
-
 </style>
 <script>
 import { defineComponent, ref, onMounted } from "vue";
 import ApexCharts from "apexcharts";
-import mqttClient from "src/mqtt"; // Assurez-vous que le chemin d'accès est correct
+import mqttClient from "src/mqtt";
+import { firebaseFirestore } from "boot/firebase";
+import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 
 export default defineComponent({
   name: "DashboardPage",
@@ -109,29 +112,27 @@ export default defineComponent({
   data() {
     return {
       chart: null,
-      chartData: [20, 15, 18, 17, 25, 23],
+      chartData: [],
       sensors: [],
-      actualTemp: 'N/A', // Température actuelle
+      actualTemp: "N/A", // Température actuelle
     };
   },
 
   mounted() {
     this.sensors = this.getStoredSensors();
     if (this.sensors.length > 0) {
-      // console.log(this.sensors);
-
-      // Dashboard = données de sensors 1
       this.subscribeToMqtt(this.sensors[0]);
+      this.fetchTemperatureData(this.sensors[0]); // Nouvelle méthode pour récupérer les données de température
     }
     this.initializeChart();
   },
 
   methods: {
     getStoredSensors() {
-      const storedSensors = localStorage.getItem('sensors');
+      const storedSensors = localStorage.getItem("sensors");
       if (storedSensors) {
-        if (storedSensors.includes(',')) {
-          return storedSensors.split(',');
+        if (storedSensors.includes(",")) {
+          return storedSensors.split(",");
         } else {
           return [storedSensors];
         }
@@ -161,16 +162,21 @@ export default defineComponent({
         chart: {
           type: "line",
         },
-        series: [{
-          name: "temp",
-          data: this.chartData,
-        }],
+        series: [
+          {
+            name: "temp",
+            data: this.chartData,
+          },
+        ],
         xaxis: {
           categories: ["00H", "04H", "08H", "12H", "16H", "20H"],
         },
       };
 
-      this.chart = new ApexCharts(document.querySelector(".chart-container"), chartOptions);
+      this.chart = new ApexCharts(
+        document.querySelector(".chart-container"),
+        chartOptions
+      );
       this.chart.render();
     },
 
@@ -178,6 +184,24 @@ export default defineComponent({
       if (this.chart) {
         this.chart.updateSeries([{ data: this.chartData }]);
       }
+    },
+
+    fetchTemperatureData(sensorId) {
+      const docRef = doc(firebaseFirestore, "savedTemperature", sensorId);
+      getDoc(docRef)
+        .then((doc) => {
+          if (doc.exists) {
+            const data = doc.data();
+            if (data == undefined || data.readings == undefined) return [];
+            this.chartData = data.readings.map(
+              (reading) => reading.temperature
+            );
+            this.updateChart(); // Mettre à jour le graphique avec les nouvelles données
+          }
+        })
+        .catch((err) => {
+          console.error("Erreur de récupération des données:", err);
+        });
     },
 
     beforeUnmount() {

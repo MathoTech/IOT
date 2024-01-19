@@ -8,14 +8,20 @@
 // Numéro de série / Unique par carte
 const char* SERIAL_NUMBER = "TempModulIOT8888";
 
+// Delay pour envoi temp au client
+const long regularIntervalSeconds = 10; // 10 secondes
+unsigned long previousRegularMillis = 0;
+const long regularInterval = regularIntervalSeconds * 1000;
+
+// Delay pour envoi temp au server pour stocker sur Firebase
+const long saveIntervalMinutes = 1; // 1min
+unsigned long previousSaveMillis = 0;
+const long saveInterval = saveIntervalMinutes * 60 * 1000;
+
 // Paramètres du capteur DHT11
 #define DHTPIN 0
 #define DHTTYPE DHT11
 DHT dht(DHTPIN, DHTTYPE);
-
-// Delay pour temp
-unsigned long previousMillis = 0;
-const long interval = 2000;
 
 const char* mqtt_server = "u9v0uc.stackhero-network.com";
 const int mqtt_port = 8883;
@@ -115,41 +121,49 @@ void loop() {
   }
   mqttClient.loop();
 
-  // Vérifie si l'intervalle est écoulé
-  if (currentMillis - previousMillis >= interval) {
-    previousMillis = currentMillis;
+  // Publication régulière toutes les 2 secondes
+  if (currentMillis - previousRegularMillis >= regularInterval) {
+    previousRegularMillis = currentMillis;
+    publishTemperature();
+  }
 
-    float temperature = dht.readTemperature();
+  // Envoi à /saveTemperature toutes les 60 secondes
+  if (currentMillis - previousSaveMillis >= saveInterval) {
+    previousSaveMillis = currentMillis;
+    saveTemperature();
+  }
+}
 
-    if (isnan(temperature)) {
-      Serial.println("Échec de la lecture du capteur DHT11");
-    } else {
-      // Convertir la température en chaîne de caractères
-      char tempString[8];
-      dtostrf(temperature, 1, 2, tempString);
-
-      // char saveTopic[50];
-      // sprintf(topic, "/saveTemperature/%s", SERIAL_NUMBER);
-      // mqttClient.publish(saveTopic, tempString);
-      char saveTopic[17] = "/saveTemperature";
-      char saveString[50];
-      sprintf(saveString, "%s: %.2f", SERIAL_NUMBER, temperature);
-      mqttClient.publish(saveTopic, saveString);
-      // Serial.print("Message send to ");
-      // Serial.print(saveTopic);
-      // Serial.print("        ");
-      // Serial.println(saveString);
-
-      char topic[50];
-      sprintf(topic, "device/%s/temperature", SERIAL_NUMBER);
-      mqttClient.publish(topic, tempString);
+void publishTemperature() {
+  float temperature = dht.readTemperature();
+  if (!isnan(temperature)) {
+    char tempString[8];
+    dtostrf(temperature, 1, 2, tempString);
+    char topic[50];
+    sprintf(topic, "device/%s/temperature", SERIAL_NUMBER);
+    mqttClient.publish(topic, tempString);
       // Serial.print("Message send to ");
       // Serial.print(topic);
       // Serial.print("        ");
       // Serial.print("Température: ");
       // Serial.print(temperature);
       // Serial.println(" °C");
-    }
+  }
+}
+
+void saveTemperature() {
+  float temperature = dht.readTemperature();
+  if (!isnan(temperature)) {
+      // char saveTopic[50];
+      // sprintf(topic, "/saveTemperature/%s", SERIAL_NUMBER);
+      // mqttClient.publish(saveTopic, tempString);
+      char saveString[50];
+      sprintf(saveString, "%s: %.2f", SERIAL_NUMBER, temperature);
+      mqttClient.publish("/saveTemperature", saveString);
+      // Serial.print("Message send to ");
+      // Serial.print(saveTopic);
+      // Serial.print("        ");
+      // Serial.println(saveString);
   }
 }
 

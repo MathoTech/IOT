@@ -148,6 +148,12 @@ export default defineComponent({
             const docSnap = await getDoc(userRef);
 
             if (docSnap.exists()) {
+              if (docSnap.data().role == "admin") {
+                setTimeout(() => {
+                  this.$router.push("/admin");
+                }, 1000);
+                return;
+              }
               this.sensors = docSnap.data().sensorsSerialNumber;
               localStorage.setItem(
                 "sensors",

@@ -183,6 +183,16 @@ export default defineComponent({
       const chartOptions = {
         chart: {
           type: "line",
+          toolbar: {
+            export: {
+              csv: {
+                filename: "exportedTemperature",
+                headerCategory: "Date",
+                headerValue: "Temperature",
+                columnDelimiter: ";",
+              },
+            },
+          },
         },
         series: [
           {
@@ -191,7 +201,7 @@ export default defineComponent({
           },
         ],
         xaxis: {
-          categories: [],
+          categories: this.chartCategories,
         },
       };
 

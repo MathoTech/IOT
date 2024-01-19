@@ -40,7 +40,6 @@
   </q-layout>
 </template>
 
-
 <style scoped>
 .links {
   display: flex;
@@ -255,6 +254,7 @@ export default defineComponent({
         });
 
         localStorage.removeItem("uid");
+        localStorage.removeItem("sensors");
 
         this.$router.push("/");
       } catch (error) {

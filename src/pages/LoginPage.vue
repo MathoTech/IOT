@@ -110,10 +110,11 @@ input[type="text"] {
 </style>
 
 <script>
-import { firebaseAuth } from 'boot/firebase';
-import { signInWithEmailAndPassword  } from "firebase/auth";
-import { defineComponent } from "vue";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { firebaseAuth, firebaseFirestore } from "boot/firebase";
+import { defineComponent, onMounted, ref } from "vue";
 import { Notify } from "quasar";
+import { doc, getDoc, updateDoc, setDoc, deleteDoc } from "firebase/firestore";
 
 export default defineComponent({
   name: "LandingPage",
@@ -137,12 +138,32 @@ export default defineComponent({
           message: "Connexion réussie",
           color: "positive",
         });
+        if (user) {
+          try {
+            const userRef = doc(
+              firebaseFirestore,
+              "users",
+              userCredential.user.uid
+            );
+            const docSnap = await getDoc(userRef);
 
-        setTimeout(() => {
-          if (user) {
-            this.$router.push("/dashboard");
+            if (docSnap.exists()) {
+              this.sensors = docSnap.data().sensorsSerialNumber;
+              localStorage.setItem(
+                "sensors",
+                docSnap.data().sensorsSerialNumber
+              );
+            }
+          } catch (error) {
+            console.error(
+              "Erreur lors de la récupération des capteurs :",
+              error
+            );
           }
-        }, 1000);
+          setTimeout(() => {
+            this.$router.push("/dashboard");
+          }, 1000);
+        }
       } catch (error) {
         Notify.create({
           message: "Erreur de connexion. Veuillez vérifier vos identifiants.",

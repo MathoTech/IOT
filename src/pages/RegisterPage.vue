@@ -146,6 +146,7 @@ export default defineComponent({
           username: this.username,
           email: this.email,
           sensorsSerialNumber: [],
+          notifTempValue: null,
           role: "user",
         });
 

@@ -37,13 +37,22 @@
         </div>
       </div>
     </div>
+    <h2>Sensor Wifi Settings</h2>
     <div class="buttons">
-      <button @click="disconnect" class="button-container-add">
-        Déconnecter
-      </button>
-      <button @click="resetWifiSettings" class="button-container-add">
+      <div @click="disconnect" class="button-container">Déconnexion Wifi</div>
+      <div @click="resetWifiSettings" class="button-container">
         Réinitialiser les paramètres Wi-Fi
-      </button>
+      </div>
+    </div>
+    <h2>Sensor Notification</h2>
+    <div class="temperature-form">
+      <div class="label">A quelle température recevoir notification</div>
+      <div class="input-container">
+        <input v-model="notificationTemperature" type="number" />
+      </div>
+      <div class="button-container" @click="saveNotificationTemperature">
+        <div class="input-text">Sauvegarder</div>
+      </div>
     </div>
   </div>
 </template>
@@ -202,62 +211,92 @@ h2 {
 
 <script>
 import { defineComponent } from "vue";
+import { firebaseFirestore, firebaseAuth } from "boot/firebase";
+import { doc, getDoc, updateDoc, setDoc, deleteDoc } from "firebase/firestore";
+import { Notify } from "quasar";
 
 export default defineComponent({
   name: "SettingsPage",
   data() {
     return {
-      wifiList: [
-        { wifi_name: "Wifi_A" },
-        { wifi_name: "Wifi_B" },
-        { wifi_name: "Wifi_C" },
-      ],
+      wifiList: [{ wifi_name: "Wifi_A" }, { wifi_name: "Wifi_B" }],
       showAdd: false,
       wifi: "",
       password: "",
-      activeWifi: null, // Wifi actif
+      activeWifi: null,
+      notificationTemperature: undefined,
     };
   },
   methods: {
     connectWifi(wifi) {
-      // Définir le wifi comme actif
       this.activeWifi = wifi;
     },
     toggleAdd() {
       this.showAdd = !this.showAdd;
     },
     removeWifi(index) {
-      // Supprime l'élément correspondant à l'index
       this.wifiList.splice(index, 1);
     },
     toggleConnection(wifi) {
-      // Toggle entre se connecter et se déconnecter
       if (wifi === this.activeWifi) {
-        this.activeWifi = null; // Déconnexion
+        this.activeWifi = null;
       } else {
-        this.activeWifi = wifi; // Connexion
+        this.activeWifi = wifi;
       }
     },
     addWifi() {
       if (this.wifi && this.password) {
-        // Vérifiez que les champs Wifi et Mot de passe ne sont pas vides
-
-        // Ajoute la nouvelle Wifi à la liste
         this.wifiList.push({
           wifi_name: this.wifi,
         });
 
-        // Réinitialise les champs Wifi et Mot de passe
         this.wifi = "";
         this.password = "";
 
-        // Cache l'add-container
         this.showAdd = false;
       } else {
-        // Affiche un message d'erreur si les champs sont vides
         alert("Veuillez remplir tous les champs.");
       }
     },
+
+    async saveNotificationTemperature() {
+      try {
+        const userId = firebaseAuth.currentUser.uid;
+
+        const userRef = doc(firebaseFirestore, "users", userId);
+
+        await updateDoc(userRef, {
+          notifTempValue: this.notificationTemperature,
+        });
+
+        Notify.create({
+          message: "Température notifiée sauvegardée avec succès",
+          color: "positive",
+        });
+      } catch (error) {
+        Notify.create({
+          message: "Erreur lors de la sauvegarde de la température notifiée.",
+          color: "negative",
+        });
+        console.error(error);
+      }
+    },
+    async fetchNotifTemp() {
+      try {
+        const userId = localStorage.getItem("uid");
+        const userRef = doc(firebaseFirestore, "users", userId);
+        const docSnap = await getDoc(userRef);
+
+        if (docSnap.exists()) {
+          this.notificationTemperature = docSnap.data().notifTempValue;
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des capteurs :", error);
+      }
+    },
+  },
+  mounted() {
+    this.fetchNotifTemp();
   },
 });
 </script>

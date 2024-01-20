@@ -147,7 +147,6 @@ void loop() {
 }
 
 void publishTemperature() {
-  Serial.println("Publish actual temperature");
   float temperature = dht.readTemperature();
   if (!isnan(temperature)) {
     char tempString[8];

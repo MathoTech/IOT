@@ -28,6 +28,7 @@
           </td>
           <td>
             <button @click="exportToCSV(user)">Export CSV</button>
+            <button @click="deleteUser(user)">Delete</button>
           </td>
         </tr>
       </tbody>
@@ -336,12 +337,36 @@ export default defineComponent({
       }
     }
 
+    async function deleteUser(user) {
+      try {
+        const userRef = doc(firebaseFirestore, "users", user.id);
+        await deleteDoc(userRef);
+
+        users.value = users.value.filter((u) => u.id !== user.id);
+
+        Notify.create({
+          message: `Utilisateur ${user.username} supprimé avec succès`,
+          color: "positive",
+        });
+      } catch (error) {
+        console.error(
+          "Erreur lors de la suppression de l'utilisateur :",
+          error
+        );
+        Notify.create({
+          message: "Erreur lors de la suppression de l'utilisateur.",
+          color: "negative",
+        });
+      }
+    }
+
     return {
       users,
       removeSensor,
       eraseData,
       exportToCSV,
       exportUsersToCsv,
+      deleteUser,
       role,
     };
   },

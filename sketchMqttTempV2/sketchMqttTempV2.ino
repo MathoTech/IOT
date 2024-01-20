@@ -6,15 +6,24 @@
 #include <DHT.h>
 
 // Numéro de série / Unique par carte
-const char* SERIAL_NUMBER = "TempModulIOT8888";
+const char* SERIAL_NUMBER = "ThermometerIot1";
 
-// Delay pour envoi temp au client
-const long regularIntervalSeconds = 10; // 10 secondes
-unsigned long previousRegularMillis = 0;
-const long regularInterval = regularIntervalSeconds * 1000;
+// Delay entre chaque loop / entre chaque envoi de actual temperature / mode deepSleep pendant ce delay
+const long deepSleepDelaySeconds = 0.2;
 
 // Delay pour envoi temp au server pour stocker sur Firebase
 const long saveIntervalMinutes = 1; // 1min
+
+// Delay pour envoi temp actuel au client
+const long regularIntervalSeconds = 15;
+
+
+
+const long deepSleepDelay = deepSleepDelaySeconds * 1000;
+
+unsigned long previousRegularMillis = 0;
+const long regularInterval = regularIntervalSeconds * 1000;
+
 unsigned long previousSaveMillis = 0;
 const long saveInterval = saveIntervalMinutes * 60 * 1000;
 
@@ -73,7 +82,7 @@ void setup() {
     // Connect to WiFi using WiFiManager for ease of use
     WiFiManager wifiManager;
     wifiManager.setConnectTimeout(10);
-    if (!wifiManager.autoConnect("D1MiniProAP")) {
+    if (!wifiManager.autoConnect("ThermometerIotWifi")) {
         Serial.println("Failed to connect to WiFi. Restarting...");
         delay(3000);
         ESP.restart();
@@ -111,7 +120,7 @@ void setup() {
     // Initialise le capteur DHT11
     dht.begin();
 
-    pinMode(LED_BUILTIN, OUTPUT);
+    // pinMode(LED_BUILTIN, OUTPUT);
 }
 
 void loop() {
@@ -132,9 +141,13 @@ void loop() {
     previousSaveMillis = currentMillis;
     saveTemperature();
   }
+
+  // goToDeepSleep();
+
 }
 
 void publishTemperature() {
+  Serial.println("Publish actual temperature");
   float temperature = dht.readTemperature();
   if (!isnan(temperature)) {
     char tempString[8];
@@ -149,6 +162,12 @@ void publishTemperature() {
       // Serial.print(temperature);
       // Serial.println(" °C");
   }
+}
+
+void goToDeepSleep() {
+    // Le temps que l'ESP doit dormir en microsecondes si deepSleepDelay superieur a 15seconds sinon risque de sleep pour rien
+    Serial.println("Go to sleep...");
+    ESP.deepSleep(deepSleepDelay);
 }
 
 void saveTemperature() {
@@ -220,6 +239,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
         if (strcmp(message, "DISCONNECT_WIFI") == 0) {
             Serial.println("Déconnexion du WiFi...");
             WiFi.disconnect(true);
+            ESP.restart();
         } else if (strcmp(message, "RESET_WIFI") == 0) {
             Serial.println("Réinitialisation des paramètres WiFi...");
             WiFi.disconnect();

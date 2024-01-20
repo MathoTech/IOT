@@ -5,7 +5,10 @@
         <img src="../assets/thermometre.png" />
 
         <q-toolbar-title class="animated-title">
-          <h4>
+          <h4 v-if="isLoginPage || isAdminPage">
+            <b class="rainbow-text">Thermometer</b>
+          </h4>
+          <h4 v-if="!isLoginPage && !isAdminPage">
             <router-link to="/dashboard"
               ><b class="rainbow-text">Thermometer</b></router-link
             >
